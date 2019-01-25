@@ -35,26 +35,21 @@ public class DoSignPDF {
             float leftMargin,
             float rightMargin,
             Boolean signLastPage,
-            byte[] ownerPassword) {
+            byte[] ownerPassword) throws PDFSignerException {
 
     	PDFSigner pdfSigner = new PDFSigner();
 
-    	try{
-        	pdfSigner.doSignPDF(pdfInputFileName, pdfOutputFileName, pkcs12FileName,
+        try {
+        pdfSigner.doSignPDF(pdfInputFileName, pdfOutputFileName, pkcs12FileName,
                         password, signText, signLanguage, sigLogo, finalize, sigComment,
                         signReason, signLocation, noExtraPage, verticalPos, leftMargin,
                         rightMargin, signLastPage, ownerPassword);
-
-        	//if ok
-            Main.setResult(
-                    java.util.ResourceBundle.getBundle("net/pflaeging/PortableSigner/i18n").getString("IsGeneratedAndSigned"),
-                    false,
-                    "");
-    	}
-    	catch(PDFSignerException pdfex){
-    		//if error thrown
-            Main.setResult(pdfex.getResultText(), pdfex.getErrorState(), pdfex.getErrorString());
-    	}
+        }catch(Exception e)
+        {
+           System.err.println(e.getMessage());
+           throw e;
+        }
+        
     }
 
 }

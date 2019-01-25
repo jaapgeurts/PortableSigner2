@@ -6,7 +6,6 @@
  *  and is under the European Public License V1.1 (http://www.osor.eu/eupl)
  * (c) Peter Pfl?ging <peter@pflaeging.net>
  */
-
 package net.pflaeging.PortableSigner;
 
 import java.awt.Color;
@@ -26,21 +25,22 @@ import javax.swing.UIManager;
  * @author  peter@pflaeging.net
  */
 public class Main extends javax.swing.JFrame {
-    
+
     private static SignCommandLine mycommand;
     public String copyright = "Peter Pfl\u00e4ging <peter@pflaeging.net>";
     public String url = "http://portablesigner.sf.net/";
-    public String contributors = "Contributors:\n" +
-            "Bogdan Drozdowski, " +
-            "Alessio Caiazza, " +
-            "Dominik Joe Pant\u016f\u010dek" +
-            "\n\nTranslations:\n" +
-            "PL: Bogdan Drozdowski\n" +
-            "IT: Alessio Caiazza\n" +
-            "CZ: Tom\u00e1\u0161 Hal\u00e1sz\n" +
-            "DE: Peter Pfl\u00e4ging\n" +
-            "ES: Roberto Espinosa\n";
-    private Preferences  prefs;
+    public String contributors = "Contributors:\n"
+            + "Bogdan Drozdowski, "
+            + "Alessio Caiazza, "
+            + "Dominik Joe Pant\u016f\u010dek"
+            + "Jaap Geurts, "
+            + "\n\nTranslations:\n"
+            + "PL: Bogdan Drozdowski\n"
+            + "IT: Alessio Caiazza\n"
+            + "CZ: Tom\u00e1\u0161 Hal\u00e1sz\n"
+            + "DE: Peter Pfl\u00e4ging\n"
+            + "ES: Roberto Espinosa\n";
+    private Preferences prefs;
     public String pagePlacement;
     private static java.awt.Color resultcolor;
     private static String result, exceptionstring;
@@ -49,7 +49,7 @@ public class Main extends javax.swing.JFrame {
     String password = "";
     private Vector<String> signatureBlockLanguages = new Vector<String>();
     private Vector<String> signatureBlockPage = new Vector<String>();
-  
+
     private static final Color colorok = new Color(0, 240, 0);
     private static final Color colorerror = new Color(240, 0, 0);
     private static final Color gotitcolor = new Color(0, 0, 240);
@@ -58,35 +58,36 @@ public class Main extends javax.swing.JFrame {
     Cursor defaultCursor = new Cursor(Cursor.DEFAULT_CURSOR);
     Version version = new Version();
     private static final ResourceBundle rbi18n
-	= ResourceBundle.getBundle("net/pflaeging/PortableSigner/i18n");
+            = ResourceBundle.getBundle("net/pflaeging/PortableSigner/i18n");
     private static final ResourceBundle rbSigBlock
-	= ResourceBundle.getBundle("net/pflaeging/PortableSigner/SignatureblockLanguages");
-    
-    
-    /** Creates new form Main */
+            = ResourceBundle.getBundle("net/pflaeging/PortableSigner/SignatureblockLanguages");
+
+    /**
+     * Creates new form Main
+     */
     public Main() {
 
-        java.util.Enumeration<String> langNumbers =
-                rbSigBlock.getKeys();
-        while ( langNumbers.hasMoreElements() )  {
+        java.util.Enumeration<String> langNumbers
+                = rbSigBlock.getKeys();
+        while (langNumbers.hasMoreElements()) {
             String languageCode = langNumbers.nextElement();
             String language = rbSigBlock.getString(languageCode);
 //            System.out.println("Sprache: " +  language + " (" + languageCode + ")");
             signatureBlockLanguages.add(language + " (" + languageCode + ")");
         }
         signatureBlockPage.add(rbi18n
-                      .getString("SignatureBlockpositionFirst"));
+                .getString("SignatureBlockpositionFirst"));
         signatureBlockPage.add(rbi18n
-                      .getString("SignatureBlockpositionLast"));
-          prefs = new Preferences();
-          prefs.get();
-          if (prefs.signLastPage) {
+                .getString("SignatureBlockpositionLast"));
+        prefs = new Preferences();
+        prefs.get();
+        if (prefs.signLastPage) {
             pagePlacement = rbi18n
-                      .getString("SignatureBlockpositionLast");
-          } else {
+                    .getString("SignatureBlockpositionLast");
+        } else {
             pagePlacement = rbi18n
-                      .getString("SignatureBlockpositionFirst");
-          }
+                    .getString("SignatureBlockpositionFirst");
+        }
         if (prefs.signLanguage.length() != 2) { // we have old prefs!
             prefs.set("SignLanguage", "de");
             prefs.get();
@@ -96,41 +97,39 @@ public class Main extends javax.swing.JFrame {
         if (operatingSystem.contains("Mac OS X")) {
             platform = "mac";
             System.setProperty(
-            "Quaqua.design","Lion"
-                    );
+                    "Quaqua.design", "Lion"
+            );
             System.setProperty(
-                    "Quaqua.tabLayoutPolicy","wrap"
-                    );
+                    "Quaqua.tabLayoutPolicy", "wrap"
+            );
             // set the Quaqua Look and Feel in the UIManager
             try {
                 UIManager.setLookAndFeel(
                         "ch.randelshofer.quaqua.QuaquaLookAndFeel"
-                        );
+                );
                 // set UI manager properties here that affect Quaqua
             } catch (Exception e) {
                 // take an appropriate action here
                 System.err.println("Unable to load Aqua UI");
             }
-        } else
-            if (operatingSystem.contains("Windows")) {
+        } else if (operatingSystem.contains("Windows")) {
             platform = "windows";
             try {
                 UIManager.setLookAndFeel(
                         "com.sun.java.swing.plaf.windows.WindowsLookAndFeel"
-                        );
+                );
             } catch (Exception e) {
                 // take an appropriate action here
                 System.err.println("Unable to load Windows UI");
             }
 
-        } else
-        {
+        } else {
             platform = "other";
         }
-      MultiLineToolTipUI.setMaximumWidth(250);
-      MultiLineToolTipUI.initialize();
-      javax.swing.ToolTipManager.sharedInstance().setDismissDelay(20000);
-      
+        MultiLineToolTipUI.setMaximumWidth(250);
+        MultiLineToolTipUI.initialize();
+        javax.swing.ToolTipManager.sharedInstance().setDismissDelay(20000);
+
         initComponents();
         if (mycommand.signature == null || mycommand.signature.equals("")) {
             jTextFieldSignaturefile.setText(prefs.lastP12File);
@@ -147,7 +146,7 @@ public class Main extends javax.swing.JFrame {
         } else {
             jTextFieldOutputfile.setText(mycommand.output);
         }
-        if (mycommand.password != null && ! "".equals(mycommand.password)) {
+        if (mycommand.password != null && !"".equals(mycommand.password)) {
             jPasswordFieldPassword.setText(mycommand.password);
         }
         if (mycommand.sigimage.equals("")) {
@@ -155,7 +154,7 @@ public class Main extends javax.swing.JFrame {
         } else {
             jTextFieldOptionLogo.setText(mycommand.sigimage);
         }
-        if (mycommand.location ==  null || mycommand.location.equals("")) {
+        if (mycommand.location == null || mycommand.location.equals("")) {
             jTextFieldLocation.setText(prefs.signLocation);
         } else {
             jTextFieldLocation.setText(mycommand.location);
@@ -180,15 +179,14 @@ public class Main extends javax.swing.JFrame {
             // backward compatibility, !!!!
             if (mycommand.sigblock.equals("german")) {
                 prefs.set("SignLanguage", "2");
-            } 
+            }
             if (mycommand.sigblock.equals("english")) {
                 prefs.set("SignLanguage", "1");
             }
 
             prefs.set("SignText", true);
         }
-        
-        
+
         if (!workingJCE) {
             jDialogJCEAlert.setSize(650, 170);
             jDialogJCEAlert.setVisible(true);
@@ -206,11 +204,11 @@ public class Main extends javax.swing.JFrame {
         }
 
     }
-    
-    /** This method is called from within the constructor to
-     * initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is
-     * always regenerated by the Form Editor.
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
      */
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -1326,18 +1324,17 @@ private void jMenuItemHelpActionPerformed(java.awt.event.ActionEvent evt) {//GEN
 //        } catch (IOException ex) {
 //            System.err.println("Unable to launch Browser for helppage");
 
-      try {
-         String HomeUrl = rbi18n.getString("HomepageURL");
-         java.awt.Desktop.getDesktop().browse(java.net.URI.create(HomeUrl));
-         }
-      catch (java.io.IOException e) {
-         System.err.println("Unable to launch Browser for helppage");
-         }
-      
+    try {
+        String HomeUrl = rbi18n.getString("HomepageURL");
+        java.awt.Desktop.getDesktop().browse(java.net.URI.create(HomeUrl));
+    } catch (java.io.IOException e) {
+        System.err.println("Unable to launch Browser for helppage");
+    }
+
 }//GEN-LAST:event_jMenuItemHelpActionPerformed
 
     private void jMenuItemAboutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemAboutActionPerformed
-    jButtonAboutActionPerformed(evt);
+        jButtonAboutActionPerformed(evt);
 }//GEN-LAST:event_jMenuItemAboutActionPerformed
 
 private void jMenuItemOptionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemOptionsActionPerformed
@@ -1357,7 +1354,7 @@ private void jMenuItemSignaturefileActionPerformed(java.awt.event.ActionEvent ev
 }//GEN-LAST:event_jMenuItemSignaturefileActionPerformed
 
 private void jMenuItemOutputfileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemOutputfileActionPerformed
-    jButtonOutputfileActionPerformed(evt);    
+    jButtonOutputfileActionPerformed(evt);
 }//GEN-LAST:event_jMenuItemOutputfileActionPerformed
 
 private void jMenuItemInputfileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemInputfileActionPerformed
@@ -1368,8 +1365,7 @@ private void jMenuItemInputfileActionPerformed(java.awt.event.ActionEvent evt) {
 }//GEN-LAST:event_jMenuFileActionPerformed
 
 private void jButtonCertInfoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonCertInfoActionPerformed
-    if (jListCerts.getSelectedIndex() != -1)
-    {
+    if (jListCerts.getSelectedIndex() != -1) {
         System.out.println("Index: " + jListCerts.getSelectedIndex());
     }
 }//GEN-LAST:event_jButtonCertInfoActionPerformed
@@ -1388,13 +1384,13 @@ private void jButtonSelectKeystoreCancelActionPerformed(java.awt.event.ActionEve
 }//GEN-LAST:event_jButtonSelectKeystoreCancelActionPerformed
 
 private void jButtonSelectKeystoreFileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSelectKeystoreFileActionPerformed
-        jFrameSelectKeystore.setVisible(false);
-        String file = chooseP12File();
-        // do nothing if open dialog was cancelled
-        if (file == null) {
-            return;
-        }
-        jTextFieldSignaturefile.setText(file);
+    jFrameSelectKeystore.setVisible(false);
+    String file = chooseP12File();
+    // do nothing if open dialog was cancelled
+    if (file == null) {
+        return;
+    }
+    jTextFieldSignaturefile.setText(file);
 //        System.out.println(file);
 }//GEN-LAST:event_jButtonSelectKeystoreFileActionPerformed
 
@@ -1416,27 +1412,24 @@ private void jButtonSelectKeystoreFileActionPerformed(java.awt.event.ActionEvent
     }//GEN-LAST:event_jButtonOptionSearchLogoActionPerformed
 
     private void jButtonOptionOKActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonOptionOKActionPerformed
-        prefs.set("SignatureLogo",jTextFieldOptionLogo.getText());
+        prefs.set("SignatureLogo", jTextFieldOptionLogo.getText());
         prefs.set("SignComment", jTextPaneCommentField.getText());
         prefs.set("SignReason", jTextFieldReason.getText());
         prefs.set("SignLocation", jTextFieldLocation.getText());
-	Float vPos, lMargin, rMargin;
+        Float vPos, lMargin, rMargin;
         try {
-        	vPos = new Float(jTextFieldVPosition.getText());
-        } catch (NumberFormatException nfe)
-        {
+            vPos = new Float(jTextFieldVPosition.getText());
+        } catch (NumberFormatException nfe) {
             vPos = new Float(0f);
         }
         try {
-        	lMargin = new Float(jTextFieldLMargin.getText());
-        } catch (NumberFormatException nfe)
-        {
+            lMargin = new Float(jTextFieldLMargin.getText());
+        } catch (NumberFormatException nfe) {
             lMargin = new Float(0f);
         }
         try {
-                rMargin = new Float(jTextFieldRMargin.getText());
-        } catch (NumberFormatException nfe)
-        {
+            rMargin = new Float(jTextFieldRMargin.getText());
+        } catch (NumberFormatException nfe) {
             rMargin = new Float(0f);
         }
         prefs.set("VerticalPosition", vPos.floatValue());
@@ -1448,11 +1441,11 @@ private void jButtonSelectKeystoreFileActionPerformed(java.awt.event.ActionEvent
     }//GEN-LAST:event_jButtonOptionOKActionPerformed
 
     private void jButtonOptionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonOptionActionPerformed
-        
-        jFrameOption.setSize(660,700);
+
+        jFrameOption.setSize(660, 700);
         String lang = prefs.signLanguage;
         java.util.ResourceBundle block = java.util.ResourceBundle.getBundle(
-                                            "net/pflaeging/PortableSigner/Signatureblock_" + lang);
+                "net/pflaeging/PortableSigner/Signatureblock_" + lang);
         jComboBoxSignatureLanguage.setSelectedItem(
                 rbSigBlock.getString(lang) + " (" + lang + ")");
         jTextPaneCommentField.setEditable(prefs.useComment);
@@ -1472,41 +1465,41 @@ private void jButtonSelectKeystoreFileActionPerformed(java.awt.event.ActionEvent
     }//GEN-LAST:event_jPasswordFieldPasswordActionPerformed
 
     private void jButtonLicenseOKActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonLicenseOKActionPerformed
-        jDialogLicense.setVisible(false);        
+        jDialogLicense.setVisible(false);
     }//GEN-LAST:event_jButtonLicenseOKActionPerformed
 
     private void jButtonLicenseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonLicenseActionPerformed
         jDialogLicense.setVisible(true);
-        jDialogLicense.setSize(450,450);
+        jDialogLicense.setSize(450, 450);
     }//GEN-LAST:event_jButtonLicenseActionPerformed
-    
+
     private void jButtonPasswordOKActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonPasswordOKActionPerformed
         // DoSign Sign;
-        
+
         jButtonErrorReport.setVisible(false);
         jProgressBar1.setIndeterminate(true);
         jLabelFinished.setText("");
-        jLabelFinished.setForeground(new java.awt.Color(0,0,0));
+        jLabelFinished.setForeground(new java.awt.Color(0, 0, 0));
         //String inputPDFFile = "", outputPDFFile = "", signatureP12File = "";
         //String password = "";
         password = String.valueOf(jPasswordFieldPassword.getPassword());
         // Clear password after using it (from bogdandr@op.pl)
-        jPasswordFieldPassword.setText ("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-		jPasswordFieldPassword.setText ("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBB");
-		jPasswordFieldPassword.setText ("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCC");
-		jPasswordFieldPassword.setText ("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDD");
-		jPasswordFieldPassword.setText ("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
-		jPasswordFieldPassword.setText ("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
-		jPasswordFieldPassword.setText ("GGGGGGGGGGGGGGGGGGGGGGGGGGGGGG");
-		jPasswordFieldPassword.setText ("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHH");
-		jPasswordFieldPassword.setText ("IIIIIIIIIIIIIIIIIIIIIIIIIIIIII");
-		jPasswordFieldPassword.setText ("JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ");
-		jPasswordFieldPassword.setText ("KKKKKKKKKKKKKKKKKKKKKKKKKKKKKK");
-		jPasswordFieldPassword.setText ("LLLLLLLLLLLLLLLLLLLLLLLLLLLLLL");
-		jPasswordFieldPassword.setText ("MMMMMMMMMMMMMMMMMMMMMMMMMMMMMM");
-		jPasswordFieldPassword.setText ("NNNNNNNNNNNNNNNNNNNNNNNNNNNNNN");
-		jPasswordFieldPassword.setText ("OOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
-		jPasswordFieldPassword.setText ("");
+        jPasswordFieldPassword.setText("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+        jPasswordFieldPassword.setText("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBB");
+        jPasswordFieldPassword.setText("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCC");
+        jPasswordFieldPassword.setText("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDD");
+        jPasswordFieldPassword.setText("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
+        jPasswordFieldPassword.setText("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+        jPasswordFieldPassword.setText("GGGGGGGGGGGGGGGGGGGGGGGGGGGGGG");
+        jPasswordFieldPassword.setText("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHH");
+        jPasswordFieldPassword.setText("IIIIIIIIIIIIIIIIIIIIIIIIIIIIII");
+        jPasswordFieldPassword.setText("JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ");
+        jPasswordFieldPassword.setText("KKKKKKKKKKKKKKKKKKKKKKKKKKKKKK");
+        jPasswordFieldPassword.setText("LLLLLLLLLLLLLLLLLLLLLLLLLLLLLL");
+        jPasswordFieldPassword.setText("MMMMMMMMMMMMMMMMMMMMMMMMMMMMMM");
+        jPasswordFieldPassword.setText("NNNNNNNNNNNNNNNNNNNNNNNNNNNNNN");
+        jPasswordFieldPassword.setText("OOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
+        jPasswordFieldPassword.setText("");
 
         inputPDFFile = jTextFieldInputfile.getText();
         outputPDFFile = jTextFieldOutputfile.getText();
@@ -1526,31 +1519,46 @@ private void jButtonSelectKeystoreFileActionPerformed(java.awt.event.ActionEvent
         prefs.set("LastP12File", signatureP12File);
         result = null;
         exceptionstring = null;
-        
-        // create Thread for signing
-/*
-        Runnable runnable = new Runnable() {
-            public void run() {
-                new DoSignPDF(inputPDFFile,
-                        outputPDFFile,
-                        signatureP12File,
-                        password,
-                        prefs.signText,
-                        prefs.signLanguage,
-                        prefs.sigLogo,
-                        finalize,
-                        sigComment,
-                        prefs.signReason,
-                        prefs.signLocation,
-                        prefs.noExtraPage,
-                        prefs.verticalPos,
-                        prefs.leftMargin,
-                        prefs.rightMargin,
-                        prefs.signLastPage,
-                        null);
-                // password cleanup (from bogdandr@op.pl)
-				password = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-				System.gc ();
+
+        new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() {
+                try {
+                    new DoSignPDF(inputPDFFile,
+                            outputPDFFile,
+                            signatureP12File,
+                            password,
+                            prefs.signText,
+                            prefs.signLanguage,
+                            prefs.sigLogo,
+                            finalize,
+                            sigComment,
+                            prefs.signReason,
+                            prefs.signLocation,
+                            prefs.noExtraPage,
+                            prefs.verticalPos,
+                            prefs.leftMargin,
+                            prefs.rightMargin,
+                            prefs.signLastPage,
+                            null);
+                    // password cleanup (from bogdandr@op.pl)
+                    password = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+                    System.gc();
+                    //if ok
+                    Main.setResult(
+                            java.util.ResourceBundle.getBundle("net/pflaeging/PortableSigner/i18n").getString("IsGeneratedAndSigned"),
+                            false,
+                            "");
+                } catch (PDFSignerException pdfex) {
+                    //if error thrown
+                    Main.setResult(pdfex.getResultText(), pdfex.getErrorState(), pdfex.getErrorString());
+                }
+
+                return null;
+            }
+
+            @Override
+            protected void done() {
                 jProgressBar1.setIndeterminate(false);
                 jProgressBar1.setValue(100);
                 //getParent().setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.DEFAULT_CURSOR));
@@ -1559,108 +1567,56 @@ private void jButtonSelectKeystoreFileActionPerformed(java.awt.event.ActionEvent
                 jLabelFinished.setText(result);
                 jDialogErrorReport.setSize(500, 200);
                 if (resultcolor.equals(colorerror)) {
-                    jButtonErrorReport.setText(rbi18n
-                            .getString("ErrorReportButton"));
+                    jButtonErrorReport.setText(
+                            rbi18n
+                                    .getString("ErrorReportButton"));
                 } else {
-                    jButtonErrorReport.setText(rbi18n
-                            .getString("ViewButton"));
+                    jButtonErrorReport.setText(
+                            rbi18n
+                                    .getString("ViewButton"));
                     jButtonErrorReport.setForeground(gotitcolor);
                 }
                 jButtonErrorReport.setVisible(true);
                 jTextFieldErrorReport.setText(exceptionstring);
             }
-        };
-        
-        
-        Thread thread = new Thread(runnable);
-        thread.start();*/
+        }.execute();
 
- 		new SwingWorker<Void, Void> () {
- 			@Override
- 			protected Void doInBackground() {
- 				new DoSignPDF(inputPDFFile,
- 					outputPDFFile,
-                                        signatureP12File,
- 					password,
- 					prefs.signText,
- 					prefs.signLanguage,
- 					prefs.sigLogo,
- 					finalize,
- 					sigComment,
- 					prefs.signReason,
- 					prefs.signLocation,
- 					prefs.noExtraPage,
- 					prefs.verticalPos,
- 					prefs.leftMargin,
- 					prefs.rightMargin,
- 					prefs.signLastPage,
- 					null);
- 				// password cleanup (from bogdandr@op.pl)
- 				password = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
- 				System.gc ();
- 				return null;
- 			}
- 
- 			@Override
- 			protected void done() {
- 				jProgressBar1.setIndeterminate(false);
- 				jProgressBar1.setValue(100);
- 				//getParent().setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.DEFAULT_CURSOR));
- 				jLabelFinished.setForeground(resultcolor);
- 				jLabelFinished.setToolTipText(exceptionstring);
- 				jLabelFinished.setText(result);
- 				jDialogErrorReport.setSize(500, 200);
- 				if (resultcolor.equals(colorerror)) {
- 					jButtonErrorReport.setText(
- 						rbi18n
- 						.getString("ErrorReportButton"));
- 				} else {
- 					jButtonErrorReport.setText(
- 						rbi18n
- 						.getString("ViewButton"));
- 					jButtonErrorReport.setForeground(gotitcolor);
- 				}
- 				jButtonErrorReport.setVisible(true);
- 				jTextFieldErrorReport.setText(exceptionstring);
- 			}
- 		}.execute ();
 
-        
     }//GEN-LAST:event_jButtonPasswordOKActionPerformed
-    
+
     private void jButtonAboutOkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonAboutOkActionPerformed
         jDialogAbout.setVisible(false);
     }//GEN-LAST:event_jButtonAboutOkActionPerformed
-    
+
     private void jButtonAboutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonAboutActionPerformed
         jTextAreaAboutVersion.setText(
-                copyright + "\n" + url + "\n\n" +
-                Version.print + "\n\n" + contributors);
+                copyright + "\n" + url + "\n\n"
+                + Version.print + "\n\n" + contributors);
         jTextAreaAboutVersion.setCaretPosition(0);
-        jDialogAbout.setSize(500,300);
+        jDialogAbout.setSize(500, 300);
         jDialogAbout.setVisible(true);
     }//GEN-LAST:event_jButtonAboutActionPerformed
-    
+
     private void jButtonCancelNoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonCancelNoActionPerformed
         jDialogCancel.setVisible(false);
     }//GEN-LAST:event_jButtonCancelNoActionPerformed
-    
+
     private void jButtonCancelYesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonCancelYesActionPerformed
         dispose();
         System.exit(0);
     }//GEN-LAST:event_jButtonCancelYesActionPerformed
-    
+
     private void jButtonCancelMainActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonCancelMainActionPerformed
         jDialogCancel.setSize(200, 100);
         jDialogCancel.setVisible(true);
     }//GEN-LAST:event_jButtonCancelMainActionPerformed
-    
+
     private void jButtonSignaturefileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonSignaturefileActionPerformed
 
 // At the moment the action for selecting the keystore is disabled. Keystores are not working!        
 //        jFrameSelectKeystore.setSize(380, 130);
 //        jFrameSelectKeystore.setVisible(true);
-                String file = chooseP12File();
+        String file = chooseP12File();
         // do nothing if open dialog was cancelled
         if (file == null) {
             return;
@@ -1668,7 +1624,7 @@ private void jButtonSelectKeystoreFileActionPerformed(java.awt.event.ActionEvent
         jTextFieldSignaturefile.setText(file);
 
     }//GEN-LAST:event_jButtonSignaturefileActionPerformed
-    
+
     private void jButtonOutputfileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonOutputfileActionPerformed
         String file = choosePDFFileSave();
         // do nothing if open dialog was cancelled
@@ -1678,7 +1634,7 @@ private void jButtonSelectKeystoreFileActionPerformed(java.awt.event.ActionEvent
         jTextFieldOutputfile.setText(file);
 //        System.out.println(file);
     }//GEN-LAST:event_jButtonOutputfileActionPerformed
-    
+
     private void jButtonInputfileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonInputfileActionPerformed
         String file = choosePDFFile();
         // do nothing if open dialog was cancelled
@@ -1695,10 +1651,10 @@ private void jButtonSelectKeystoreFileActionPerformed(java.awt.event.ActionEvent
 }//GEN-LAST:event_jButtonJCEAlertOKActionPerformed
 
     private void jCheckBoxCommentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBoxCommentActionPerformed
-       prefs.set("useComment", !prefs.useComment);
-       jTextPaneCommentField.setEditable(prefs.useComment);
-       jTextPaneCommentField.setEnabled(prefs.useComment);
-       // System.err.println("Comment = " + prefs.useComment);
+        prefs.set("useComment", !prefs.useComment);
+        jTextPaneCommentField.setEditable(prefs.useComment);
+        jTextPaneCommentField.setEnabled(prefs.useComment);
+        // System.err.println("Comment = " + prefs.useComment);
 }//GEN-LAST:event_jCheckBoxCommentActionPerformed
 
     private void jCheckBoxFinalizeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBoxFinalizeActionPerformed
@@ -1707,11 +1663,11 @@ private void jButtonSelectKeystoreFileActionPerformed(java.awt.event.ActionEvent
     }//GEN-LAST:event_jCheckBoxFinalizeActionPerformed
 
     private void jButtonResetCommentFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonResetCommentFieldActionPerformed
-        String originalComment = 
-                java.util.ResourceBundle.getBundle("net/pflaeging/PortableSigner/Signatureblock_" + prefs.signLanguage)
-                .getString("comment");
+        String originalComment
+                = java.util.ResourceBundle.getBundle("net/pflaeging/PortableSigner/Signatureblock_" + prefs.signLanguage)
+                        .getString("comment");
         prefs.set("SignComment", originalComment);
-        jTextPaneCommentField.setText(originalComment);        
+        jTextPaneCommentField.setText(originalComment);
     }//GEN-LAST:event_jButtonResetCommentFieldActionPerformed
 
     private void jTextFieldErrorReportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextFieldErrorReportActionPerformed
@@ -1758,68 +1714,67 @@ private void jButtonSelectKeystoreFileActionPerformed(java.awt.event.ActionEvent
 }//GEN-LAST:event_jTextFieldLocationActionPerformed
 
     private void jButtonViewSourceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonViewSourceActionPerformed
-            try {
-                Desktop desktop = null;
-                if (Desktop.isDesktopSupported()) {
-                    desktop = Desktop.getDesktop();
-                    java.io.File file = new java.io.File(jTextFieldInputfile.getText());
-                    desktop.open(file);
-                }
-            } catch (IOException e) {
-                System.err.println("Unable to start PDF reader");
+        try {
+            Desktop desktop = null;
+            if (Desktop.isDesktopSupported()) {
+                desktop = Desktop.getDesktop();
+                java.io.File file = new java.io.File(jTextFieldInputfile.getText());
+                desktop.open(file);
             }
+        } catch (IOException e) {
+            System.err.println("Unable to start PDF reader");
+        }
     }//GEN-LAST:event_jButtonViewSourceActionPerformed
 
     private void jComboBoxSignatureLanguageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBoxSignatureLanguageActionPerformed
 
         String tempS = jComboBoxSignatureLanguage.getSelectedItem().toString();
-        String tempLang = tempS.substring(tempS.indexOf("(") + 1,tempS.indexOf(")"));
+        String tempLang = tempS.substring(tempS.indexOf("(") + 1, tempS.indexOf(")"));
 //        System.out.println("Selected Languagecode: " + tempLang);
         prefs.set("SignLanguage", tempLang);
     }//GEN-LAST:event_jComboBoxSignatureLanguageActionPerformed
 
     private void jCheckBoxSeparatepageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBoxSeparatepageActionPerformed
-       prefs.set("NoExtraPage", !prefs.noExtraPage);
-       jComboBoxSignatureblockPage.setEnabled(prefs.noExtraPage);
-       jTextFieldVPosition.setEnabled(prefs.noExtraPage);
-       jTextFieldLMargin.setEnabled(prefs.noExtraPage);
-       jTextFieldRMargin.setEnabled(prefs.noExtraPage);
+        prefs.set("NoExtraPage", !prefs.noExtraPage);
+        jComboBoxSignatureblockPage.setEnabled(prefs.noExtraPage);
+        jTextFieldVPosition.setEnabled(prefs.noExtraPage);
+        jTextFieldLMargin.setEnabled(prefs.noExtraPage);
+        jTextFieldRMargin.setEnabled(prefs.noExtraPage);
     }//GEN-LAST:event_jCheckBoxSeparatepageActionPerformed
 
     private void jComboBoxSignatureblockPageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBoxSignatureblockPageActionPerformed
         // TODO add your handling code here:
         String tempPage = jComboBoxSignatureblockPage.getSelectedItem().toString();
         if (rbi18n
-            .getString("SignatureBlockpositionFirst").equals(tempPage))
-            {
-                prefs.set("SignatureOnLastPage", false);
-                System.err.println("Selected Page: First");
-            } else {
-                prefs.set("SignatureOnLastPage", true);
-                System.err.println("Selected Page: Last");
-            }
+                .getString("SignatureBlockpositionFirst").equals(tempPage)) {
+            prefs.set("SignatureOnLastPage", false);
+            System.err.println("Selected Page: First");
+        } else {
+            prefs.set("SignatureOnLastPage", true);
+            System.err.println("Selected Page: Last");
+        }
         prefs.get();
     }//GEN-LAST:event_jComboBoxSignatureblockPageActionPerformed
 
-    private void jButtonViewOutputActionPerformed(java.awt.event.ActionEvent evt) {                                                  
-            try {
-                Desktop desktop = null;
-                if (Desktop.isDesktopSupported()) {
-                    desktop = Desktop.getDesktop();
-                    java.io.File file = new java.io.File(jTextFieldOutputfile.getText());
-                    desktop.open(file);
-                }
-            } catch (IOException e) {
-                System.err.println("Unable to start PDF reader");
+    private void jButtonViewOutputActionPerformed(java.awt.event.ActionEvent evt) {
+        try {
+            Desktop desktop = null;
+            if (Desktop.isDesktopSupported()) {
+                desktop = Desktop.getDesktop();
+                java.io.File file = new java.io.File(jTextFieldOutputfile.getText());
+                desktop.open(file);
             }
+        } catch (IOException e) {
+            System.err.println("Unable to start PDF reader");
+        }
     }
-    
+
     /**
      * @param args the command line arguments
      */
     public static void main(String args[]) {
         try {
-                        
+
             // check for Java JCE unrestricted!!!
             if (javax.crypto.Cipher.getMaxAllowedKeyLength("RC5") < Integer.MAX_VALUE) {
                 workingJCE = false;
@@ -1834,24 +1789,36 @@ private void jButtonSelectKeystoreFileActionPerformed(java.awt.event.ActionEvent
                     System.exit(254);
                 }
 // TODO: Implement commandline
-                new DoSignPDF(mycommand.input,
-                        mycommand.output, 
-                        mycommand.signature, 
-                        mycommand.password, 
-                        !mycommand.sigblock.equals(""), 
-                        mycommand.sigblock, 
-                        mycommand.sigimage, 
-                        mycommand.finalize, 
-                        mycommand.comment,
-                        mycommand.reason,
-                        mycommand.location,
-                        mycommand.noSigPage,
-                        mycommand.vPos,
-                        mycommand.lMargin,
-                        mycommand.rMargin,
-                        mycommand.lastPage,
-                        mycommand.ownerPwd);
+                try {
+                    new DoSignPDF(mycommand.input,
+                            mycommand.output,
+                            mycommand.signature,
+                            mycommand.password,
+                            !mycommand.sigblock.equals(""),
+                            mycommand.sigblock,
+                            mycommand.sigimage,
+                            mycommand.finalize,
+                            mycommand.comment,
+                            mycommand.reason,
+                            mycommand.location,
+                            mycommand.noSigPage,
+                            mycommand.vPos,
+                            mycommand.lMargin,
+                            mycommand.rMargin,
+                            mycommand.lastPage,
+                            mycommand.ownerPwd);
+                    //if ok
+
+                    Main.setResult(
+                            java.util.ResourceBundle.getBundle("net/pflaeging/PortableSigner/i18n").getString("IsGeneratedAndSigned"),
+                            false,
+                            "");
+                } catch (PDFSignerException pdfex) {
+                    //if error thrown
+                    Main.setResult(pdfex.getResultText(), pdfex.getErrorState(), pdfex.getErrorString());
+                }
                 System.exit(0);
+
             } else {
                 java.awt.EventQueue.invokeLater(new Runnable() {
 
@@ -1863,9 +1830,9 @@ private void jButtonSelectKeystoreFileActionPerformed(java.awt.event.ActionEvent
         } catch (NoSuchAlgorithmException ex) {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
+
     }
-    
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.ButtonGroup buttonGroup2;
@@ -1990,29 +1957,33 @@ private void jButtonSelectKeystoreFileActionPerformed(java.awt.event.ActionEvent
     private javax.swing.JTextPane jTextPaneCommentField;
     // End of variables declaration//GEN-END:variables
 
-    
     private String generateOutputFile(String inputFile) {
         // generating filename by appending -sig to filename:
         // /i/am/here.pdf becomes /i/am/here-sig.pdf
-        if (inputFile.equals("")) { return ""; }
-        return inputFile.substring(0,inputFile.lastIndexOf(".pdf")) + "-sig.pdf";
+        if (inputFile.equals("")) {
+            return "";
+        }
+        return inputFile.substring(0, inputFile.lastIndexOf(".pdf")) + "-sig.pdf";
     }
-    
-    private String getDir (String absFile) {
+
+    private String getDir(String absFile) {
         // get Dir component from file as string
-        if (absFile.equals("")) { return ""; }
+        if (absFile.equals("")) {
+            return "";
+        }
         java.io.File myfile = new java.io.File(absFile);
         return myfile.getParent();
     }
-    
-    /** Opens dialog for user to choose an PDF file to open and read.
+
+    /**
+     * Opens dialog for user to choose an PDF file to open and read.
      *
      * @return PDF file or null if user cancelled the dialog
      */
     private String choosePDFFile() {
         javax.swing.JFileChooser chooser = new javax.swing.JFileChooser(getDir(prefs.lastInputFile));
         chooser.setFileFilter(new PDFFilter());
-        
+
         int returnVal = chooser.showOpenDialog(this);
         if (returnVal == javax.swing.JFileChooser.APPROVE_OPTION) {
             return chooser.getSelectedFile().getAbsolutePath();
@@ -2020,15 +1991,16 @@ private void jButtonSelectKeystoreFileActionPerformed(java.awt.event.ActionEvent
         // cancel was clicked
         return null;
     }
-    
-    /** Save dialog for user to choose an PDF file to save.
+
+    /**
+     * Save dialog for user to choose an PDF file to save.
      *
      * @return PDF file or null if user cancelled the dialog
      */
     private String choosePDFFileSave() {
         javax.swing.JFileChooser chooser = new javax.swing.JFileChooser(getDir(jTextFieldOutputfile.getText()));
         chooser.setFileFilter(new PDFFilter());
-        
+
         int returnVal = chooser.showSaveDialog(this);
         if (returnVal == javax.swing.JFileChooser.APPROVE_OPTION) {
             return chooser.getSelectedFile().getAbsolutePath();
@@ -2036,15 +2008,16 @@ private void jButtonSelectKeystoreFileActionPerformed(java.awt.event.ActionEvent
         // cancel was clicked
         return null;
     }
-    
-    /** Opens dialog for user to choose an P12 file to open and read.
+
+    /**
+     * Opens dialog for user to choose an P12 file to open and read.
      *
      * @return P12 file or null if user cancelled the dialog
      */
     private String chooseP12File() {
         javax.swing.JFileChooser chooser = new javax.swing.JFileChooser(getDir(prefs.lastP12File));
         chooser.setFileFilter(new P12Filter());
-        
+
         int returnVal = chooser.showOpenDialog(this);
         if (returnVal == javax.swing.JFileChooser.APPROVE_OPTION) {
             return chooser.getSelectedFile().getAbsolutePath();
@@ -2053,20 +2026,21 @@ private void jButtonSelectKeystoreFileActionPerformed(java.awt.event.ActionEvent
         return null;
     }
 
-    /** Opens dialog for user to choose an image file to open and read.
+    /**
+     * Opens dialog for user to choose an image file to open and read.
      *
      * @return image file or null if user cancelled the dialog
      */
     private String chooseImageFile() {
         String imagefile;
         if (jTextFieldOptionLogo.getText().equals("")) {
-            imagefile = prefs.sigLogo; 
+            imagefile = prefs.sigLogo;
         } else {
             imagefile = jTextFieldOptionLogo.getText();
-        }    
+        }
         javax.swing.JFileChooser chooser = new javax.swing.JFileChooser(getDir(imagefile));
         chooser.setFileFilter(new ImageFilter());
-        
+
         int returnVal = chooser.showOpenDialog(this);
         if (returnVal == javax.swing.JFileChooser.APPROVE_OPTION) {
             return chooser.getSelectedFile().getAbsolutePath();
@@ -2075,45 +2049,50 @@ private void jButtonSelectKeystoreFileActionPerformed(java.awt.event.ActionEvent
         return null;
     }
 
-    /** Filter which accepts only PDF files */
+    /**
+     * Filter which accepts only PDF files
+     */
     private static class PDFFilter extends javax.swing.filechooser.FileFilter {
+
         public boolean accept(java.io.File f) {
             return f.isDirectory() || f.getName().endsWith(".pdf");
         }
-        
+
         public String getDescription() {
             return rbi18n.getString("PDFDescription");
         }
     }
-    
-    /** Filter which accepts only P12 files */
+
+    /**
+     * Filter which accepts only P12 files
+     */
     private static class P12Filter extends javax.swing.filechooser.FileFilter {
+
         public boolean accept(java.io.File f) {
             return f.isDirectory() || f.getName().endsWith(".p12") || f.getName().endsWith(".pfx");
         }
-        
+
         public String getDescription() {
             return rbi18n.getString("PKCS12Description");
         }
     }
 
     private static class ImageFilter extends javax.swing.filechooser.FileFilter {
+
         public boolean accept(java.io.File f) {
-            return f.isDirectory() || f.getName().endsWith(".gif") || 
-                    f.getName().endsWith(".png") || f.getName().endsWith(".jpg");
+            return f.isDirectory() || f.getName().endsWith(".gif")
+                    || f.getName().endsWith(".png") || f.getName().endsWith(".jpg");
         }
-        
+
         public String getDescription() {
             return rbi18n.getString("ImageDescription");
         }
     }
-    
-    
-    
+
     private static String getTooltip(String value) {
         return java.util.ResourceBundle.getBundle("net/pflaeging/PortableSigner/ToolTips").getString(value);
     }
-    
+
     private void setTooltips(boolean visible) {
         if (visible) {
             jLabelInput.setToolTipText(getTooltip("Inputfile"));
@@ -2169,18 +2148,17 @@ private void jButtonSelectKeystoreFileActionPerformed(java.awt.event.ActionEvent
             jLabelReason.setCursor(defaultCursor);
             jLabelLocation.setToolTipText(null);
             jLabelLocation.setCursor(defaultCursor);
- 
+
         }
     }
-    
-    
+
     public static void setResult(String resultText, Boolean errorState, String errorString) {
         if (errorState) {
             resultcolor = colorerror;
             if (exceptionstring == null) {
                 exceptionstring = errorString;
             }
-            System.err.println(resultText  + "\n\t" + exceptionstring);
+            System.err.println(resultText + "\n\t" + exceptionstring);
         } else {
             resultcolor = colorok;
             exceptionstring = null;
@@ -2190,4 +2168,3 @@ private void jButtonSelectKeystoreFileActionPerformed(java.awt.event.ActionEvent
         }
     }
 }
-

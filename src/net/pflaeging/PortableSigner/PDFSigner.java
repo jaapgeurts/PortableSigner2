@@ -26,22 +26,33 @@ import com.itextpdf.text.pdf.PdfSignatureAppearance;
 import com.itextpdf.text.pdf.PdfStamper;
 import com.itextpdf.text.Rectangle;
 import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.pdf.PdfName;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
+import com.itextpdf.text.pdf.PdfSignature;
+import com.itextpdf.text.pdf.security.BouncyCastleDigest;
+import com.itextpdf.text.pdf.security.DigestAlgorithms;
+import com.itextpdf.text.pdf.security.ExternalDigest;
+import com.itextpdf.text.pdf.security.ExternalSignature;
+import com.itextpdf.text.pdf.security.MakeSignature;
+import com.itextpdf.text.pdf.security.PrivateKeySignature;
 import com.itextpdf.text.xml.xmp.XmpWriter;
 import java.io.ByteArrayOutputStream;
+import java.net.URL;
+import java.security.Security;
 import java.util.HashMap;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 /**
- * 
+ *
  * @author peter@pflaeging.net
  */
 public class PDFSigner {
 
     private static GetPKCS12 pkcs12;
     public float ptToCm = (float) 0.0352777778;
+    private String IMG_FILE = "/home/jaapg/Pictures/fontys-logo.png";
 
-    /** Creates a new instance of DoSignPDF */
     public void doSignPDF(String pdfInputFileName,
             String pdfOutputFileName,
             String pkcs12FileName,
@@ -58,7 +69,133 @@ public class PDFSigner {
             float leftMargin,
             float rightMargin,
             Boolean signLastPage,
-            byte[] ownerPassword) throws PDFSignerException{
+            byte[] ownerPassword) throws PDFSignerException {
+
+        try {
+            // Get the keystore
+            System.err.println("Position V:" + verticalPos + " L:" + leftMargin + " R:" + rightMargin);
+            Rectangle signatureBlock;
+
+            BouncyCastleProvider provider = new BouncyCastleProvider();
+            Security.addProvider(provider);
+
+            pkcs12 = new GetPKCS12(pkcs12FileName, password);
+
+            // open the source document
+            PdfReader reader = null;
+            try {
+//                System.out.println("Password:" + ownerPassword.toString());
+                if (ownerPassword == null) {
+                    reader = new PdfReader(pdfInputFileName);
+                } else {
+                    reader = new PdfReader(pdfInputFileName, ownerPassword);
+                }
+            } catch (IOException e) {
+
+                throw new PDFSignerException(
+                        java.util.ResourceBundle.getBundle(
+                                "net/pflaeging/PortableSigner/i18n").getString(
+                                        "CouldNotBeOpened"),
+                        true,
+                        e.getLocalizedMessage());
+            }
+
+            // Open the new output dosocument.
+            FileOutputStream fout = null;
+            try {
+                fout = new FileOutputStream(pdfOutputFileName);
+            } catch (FileNotFoundException e) {
+
+                throw new PDFSignerException(
+                        java.util.ResourceBundle.getBundle("net/pflaeging/PortableSigner/i18n").getString("CouldNotBeWritten"),
+                        true,
+                        e.getLocalizedMessage());
+            }
+            try {
+
+                PdfStamper stamper = PdfStamper.createSignature(reader, fout, '\0');
+
+                // 
+                // set additional info
+                HashMap<String, String> pdfInfo = reader.getInfo();
+                // thanks to Markus Feisst
+                String pdfInfoProducer = "";
+
+                if (pdfInfo.get("Producer") != null) {
+                    pdfInfoProducer = pdfInfo.get("Producer").toString();
+                    pdfInfoProducer = pdfInfoProducer + " (signed with PortableSigner " + Version.release + ")";
+                } else {
+                    pdfInfoProducer = "Unknown Producer (signed with PortableSigner " + Version.release + ")";
+                }
+                pdfInfo.put("Producer", pdfInfoProducer);
+                //System.err.print("++ Producer:" + pdfInfo.get("Producer").toString());
+                stamper.setMoreInfo(pdfInfo);
+                
+                // add info as xmp metadata
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                XmpWriter xmp = new XmpWriter(baos, pdfInfo);
+                xmp.close();
+                stamper.setXmpMetadata(baos.toByteArray());
+
+                // Create the appearance
+                PdfSignatureAppearance appearance = stamper.getSignatureAppearance();
+                appearance.setReason(signReason);
+                appearance.setLocation(signLocation);
+                appearance.setVisibleSignature(new Rectangle(100, 100, 350, 175), 1, "sig");
+                appearance.setImage(Image.getInstance(IMG_FILE));
+                appearance.setRenderingMode(PdfSignatureAppearance.RenderingMode.NAME_AND_DESCRIPTION);
+
+                 if (finalize) {
+                    appearance.setCertificationLevel(PdfSignatureAppearance.CERTIFIED_NO_CHANGES_ALLOWED);
+                } else {
+                    appearance.setCertificationLevel(PdfSignatureAppearance.NOT_CERTIFIED);
+                }
+                
+                // Create the signature
+                ExternalDigest digest = new BouncyCastleDigest();
+                ExternalSignature signature
+                        = new PrivateKeySignature(GetPKCS12.privateKey,DigestAlgorithms.SHA512, provider.getName());
+                MakeSignature.signDetached(appearance, digest, signature, GetPKCS12.certificateChain,
+                        null, null, null, 0, MakeSignature.CryptoStandard.CMS);
+                
+                stamper.close();
+
+            } catch (Exception e) {
+                throw new PDFSignerException(
+                        java.util.ResourceBundle.getBundle("net/pflaeging/PortableSigner/i18n").getString("ErrorWhileSigningFile"),
+                        true,
+                        e.getLocalizedMessage());
+            }
+
+        } catch (KeyStoreException kse) {
+
+            throw new PDFSignerException(
+                    java.util.ResourceBundle.getBundle("net/pflaeging/PortableSigner/i18n").getString("ErrorCreatingKeystore"),
+                    true, kse.getLocalizedMessage());
+
+        }
+    }
+
+    /**
+     * Creates a new instance of DoSignPDF
+     */
+    public void doSignPDFOld(String pdfInputFileName,
+            String pdfOutputFileName,
+            String pkcs12FileName,
+            String password,
+            Boolean signText,
+            String signLanguage,
+            String sigLogo,
+            Boolean finalize,
+            String sigComment,
+            String signReason,
+            String signLocation,
+            Boolean noExtraPage,
+            float verticalPos,
+            float leftMargin,
+            float rightMargin,
+            Boolean signLastPage,
+            byte[] ownerPassword) throws PDFSignerException {
         try {
             //System.out.println("-> DoSignPDF <-");
             //System.out.println("Eingabedatei: " + pdfInputFileName);
@@ -78,45 +215,32 @@ public class PDFSigner {
             PdfReader reader = null;
             try {
 //                System.out.println("Password:" + ownerPassword.toString());
-				if (ownerPassword == null)
-					reader = new PdfReader(pdfInputFileName);
-				else
-					reader = new PdfReader(pdfInputFileName, ownerPassword);
+                if (ownerPassword == null) {
+                    reader = new PdfReader(pdfInputFileName);
+                } else {
+                    reader = new PdfReader(pdfInputFileName, ownerPassword);
+                }
             } catch (IOException e) {
-            	
-            	/* MODIFY BY: Denis Torresan
-                Main.setResult(
+
+              
+                throw new PDFSignerException(
                         java.util.ResourceBundle.getBundle(
-                        "net/pflaeging/PortableSigner/i18n").getString(
-                        "CouldNotBeOpened"),
+                                "net/pflaeging/PortableSigner/i18n").getString(
+                                        "CouldNotBeOpened"),
                         true,
                         e.getLocalizedMessage());
-                */
-            	
-            	throw new PDFSignerException(
-            			java.util.ResourceBundle.getBundle(
-                        "net/pflaeging/PortableSigner/i18n").getString(
-                        "CouldNotBeOpened"),
-                        true,
-                        e.getLocalizedMessage() );
             }
             FileOutputStream fout = null;
             try {
                 fout = new FileOutputStream(pdfOutputFileName);
             } catch (FileNotFoundException e) {
-            	
-            	/* MODIFY BY: Denis Torresan
-                Main.setResult(
+
+               
+                throw new PDFSignerException(
                         java.util.ResourceBundle.getBundle("net/pflaeging/PortableSigner/i18n").getString("CouldNotBeWritten"),
                         true,
                         e.getLocalizedMessage());
-                */
-            	
-            	throw new PDFSignerException(
-            			java.util.ResourceBundle.getBundle("net/pflaeging/PortableSigner/i18n").getString("CouldNotBeWritten"),
-                        true,
-                        e.getLocalizedMessage() );
-       	
+
             }
             PdfStamper stp = null;
             try {
@@ -130,20 +254,22 @@ public class PDFSigner {
                 // thanks to Markus Feisst
                 String pdfInfoProducer = "";
 
-                if( pdfInfo.get("Producer") != null )
-                {
-                	pdfInfoProducer = pdfInfo.get("Producer").toString();
-                        pdfInfoProducer = pdfInfoProducer + " (signed with PortableSigner " + Version.release + ")";
+                if (pdfInfo.get("Producer") != null) {
+                    pdfInfoProducer = pdfInfo.get("Producer").toString();
+                    pdfInfoProducer = pdfInfoProducer + " (signed with PortableSigner " + Version.release + ")";
                 } else {
-                        pdfInfoProducer = "Unknown Producer (signed with PortableSigner " + Version.release + ")";
+                    pdfInfoProducer = "Unknown Producer (signed with PortableSigner " + Version.release + ")";
                 }
                 pdfInfo.put("Producer", pdfInfoProducer);
                 //System.err.print("++ Producer:" + pdfInfo.get("Producer").toString());
                 stp.setMoreInfo(pdfInfo);
+
+                // add info as xmp metadata
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		XmpWriter xmp = new XmpWriter(baos, pdfInfo);
-		xmp.close();
-		stp.setXmpMetadata(baos.toByteArray());
+                XmpWriter xmp = new XmpWriter(baos, pdfInfo);
+                xmp.close();
+                stp.setXmpMetadata(baos.toByteArray());
+                // Create signature table
                 if (signText) {
                     String greet, signator, datestr, ca, serial, special, note, urn, urnvalue;
                     int specialcount = 0;
@@ -162,9 +288,8 @@ public class PDFSigner {
                     urn = block.getString("urn");
                     urnvalue = block.getString("urnvalue");
 
-
                     //sigcomment = block.getString(signLanguage + "-comment");
-                   // upper y
+                    // upper y
                     float topy = size.getTop();
                     System.err.println("Top: " + topy * ptToCm);
                     // right x
@@ -192,7 +317,7 @@ public class PDFSigner {
                         specialcount = 1;
                     }
                     PdfContentByte content = stp.getOverContent(sigpage);
-                    
+
                     float[] cellsize = new float[2];
                     cellsize[0] = 100f;
                     // rightx = width of page
@@ -207,10 +332,10 @@ public class PDFSigner {
                     //      consist: greetingcell, signatureblock , commentcell
                     PdfPTable signatureBlockCompleteTable = new PdfPTable(2);
                     PdfPTable signatureTextTable = new PdfPTable(2);
-                    PdfPCell signatureBlockHeadingCell =
-                            new PdfPCell(new Paragraph(
-                            new Chunk(greet,
-                            new Font(Font.FontFamily.HELVETICA, 12))));
+                    PdfPCell signatureBlockHeadingCell
+                            = new PdfPCell(new Paragraph(
+                                    new Chunk(greet,
+                                            new Font(Font.FontFamily.HELVETICA, 12))));
                     signatureBlockHeadingCell.setPaddingBottom(5);
                     signatureBlockHeadingCell.setColspan(2);
                     signatureBlockHeadingCell.setBorderWidth(0f);
@@ -220,46 +345,46 @@ public class PDFSigner {
                     // Line 1
                     signatureTextTable.addCell(
                             new Paragraph(
-                            new Chunk(signator, new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD))));
+                                    new Chunk(signator, new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD))));
                     signatureTextTable.addCell(
                             new Paragraph(
-                            new Chunk(GetPKCS12.subject, new Font(Font.FontFamily.COURIER, 10))));
+                                    new Chunk(GetPKCS12.subject, new Font(Font.FontFamily.COURIER, 10))));
                     // Line 2
                     signatureTextTable.addCell(
                             new Paragraph(
-                            new Chunk(datestr, new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD))));
+                                    new Chunk(datestr, new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD))));
                     signatureTextTable.addCell(
                             new Paragraph(
-                            new Chunk(datum.toString(), new Font(Font.FontFamily.COURIER, 10))));
+                                    new Chunk(datum.toString(), new Font(Font.FontFamily.COURIER, 10))));
                     // Line 3
                     signatureTextTable.addCell(
                             new Paragraph(
-                            new Chunk(ca, new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD))));
+                                    new Chunk(ca, new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD))));
                     signatureTextTable.addCell(
                             new Paragraph(
-                            new Chunk(GetPKCS12.issuer, new Font(Font.FontFamily.COURIER, 10))));
+                                    new Chunk(GetPKCS12.issuer, new Font(Font.FontFamily.COURIER, 10))));
                     // Line 4
                     signatureTextTable.addCell(
                             new Paragraph(
-                            new Chunk(serial, new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD))));
+                                    new Chunk(serial, new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD))));
                     signatureTextTable.addCell(
                             new Paragraph(
-                            new Chunk(GetPKCS12.serial.toString(), new Font(Font.FontFamily.COURIER, 10))));
+                                    new Chunk(GetPKCS12.serial.toString(), new Font(Font.FontFamily.COURIER, 10))));
                     // Line 5
                     if (specialcount == 1) {
                         signatureTextTable.addCell(
                                 new Paragraph(
-                                new Chunk(special, new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD))));
+                                        new Chunk(special, new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD))));
                         signatureTextTable.addCell(
                                 new Paragraph(
-                                new Chunk(GetPKCS12.atEgovOID, new Font(Font.FontFamily.COURIER, 10))));
+                                        new Chunk(GetPKCS12.atEgovOID, new Font(Font.FontFamily.COURIER, 10))));
                     }
                     signatureTextTable.addCell(
                             new Paragraph(
-                            new Chunk(urn, new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD))));
+                                    new Chunk(urn, new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD))));
                     signatureTextTable.addCell(
                             new Paragraph(
-                            new Chunk(urnvalue, new Font(Font.FontFamily.COURIER, 10))));
+                                    new Chunk(urnvalue, new Font(Font.FontFamily.COURIER, 10))));
                     signatureTextTable.setTotalWidth(cellsize);
                     System.err.println("signatureTextTable Width: " + cellsize[0] * ptToCm + " " + cellsize[1] * ptToCm);
                     // inner table end
@@ -273,7 +398,7 @@ public class PDFSigner {
                     } else {
                         logo = Image.getInstance(sigLogo);
                     }
-                    
+
                     PdfPCell logocell = new PdfPCell();
                     logocell.setVerticalAlignment(PdfPCell.ALIGN_MIDDLE);
                     logocell.setHorizontalAlignment(PdfPCell.ALIGN_CENTER);
@@ -282,14 +407,14 @@ public class PDFSigner {
                     PdfPCell incell = new PdfPCell(signatureTextTable);
                     incell.setBorderWidth(0f);
                     signatureBlockCompleteTable.addCell(incell);
-                    PdfPCell commentcell =
-                            new PdfPCell(new Paragraph(
-                            new Chunk(sigComment,
-                            new Font(Font.FontFamily.HELVETICA, 10))));
-                    PdfPCell notecell =
-                            new PdfPCell(new Paragraph(
-                            new Chunk(note,
-                            new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD))));
+                    PdfPCell commentcell
+                            = new PdfPCell(new Paragraph(
+                                    new Chunk(sigComment,
+                                            new Font(Font.FontFamily.HELVETICA, 10))));
+                    PdfPCell notecell
+                            = new PdfPCell(new Paragraph(
+                                    new Chunk(note,
+                                            new Font(Font.FontFamily.HELVETICA, 10, Font.BOLD))));
                     //commentcell.setPaddingTop(10);
                     //commentcell.setColspan(2);
                     // commentcell.setBorderWidth(0f);
@@ -302,64 +427,22 @@ public class PDFSigner {
                     System.err.println("signatureBlockCompleteTable Width: " + cells[0] * ptToCm + " " + cells[1] * ptToCm);
                     signatureBlockCompleteTable.writeSelectedRows(0, 4 + specialcount, leftMarginPT, verticalPositionPT, content);
                     System.err.println("signatureBlockCompleteTable Position " + 30 * ptToCm + " " + (topy - 20) * ptToCm);
-                    signatureBlock = new Rectangle( 30 + signatureBlockCompleteTable.getTotalWidth() - 20,
+                    signatureBlock = new Rectangle(30 + signatureBlockCompleteTable.getTotalWidth() - 20,
                             topy - 20 - 20,
                             30 + signatureBlockCompleteTable.getTotalWidth(),
                             topy - 20);
-//                    //////
-//                    AcroFields af = reader.getAcroFields();
-//                    ArrayList names = af.getSignatureNames();
-//                    for (int k = 0; k < names.size(); ++k) {
-//                        String name = (String) names.get(k);
-//                        System.out.println("Signature name: " + name);
-//                        System.out.println("\tSignature covers whole document: " + af.signatureCoversWholeDocument(name));
-//                        System.out.println("\tDocument revision: " + af.getRevision(name) + " of " + af.getTotalRevisions());
-//                        PdfPKCS7 pk = af.verifySignature(name);
-//                        X509Certificate tempsigner = pk.getSigningCertificate();
-//                        Calendar cal = pk.getSignDate();
-//                        Certificate pkc[] = pk.getCertificates();
-//                        java.util.ResourceBundle tempoid =
-//                                java.util.ResourceBundle.getBundle("net/pflaeging/PortableSigner/SpecialOID");
-//                        String tmpEgovOID = "";
-//
-//                        for (Enumeration<String> o = tempoid.getKeys(); o.hasMoreElements();) {
-//                            String element = o.nextElement();
-//                            // System.out.println(element + ":" + oid.getString(element));
-//                            if (tempsigner.getNonCriticalExtensionOIDs().contains(element)) {
-//                                if (!tmpEgovOID.equals("")) {
-//                                    tmpEgovOID += ", ";
-//                                }
-//                                tmpEgovOID += tempoid.getString(element) + " (OID=" + element + ")";
-//                            }
-//                        }
-//                        //System.out.println("\tSigniert von: " + PdfPKCS7.getSubjectFields(pk.getSigningCertificate()));
-//                        System.out.println("\tSigniert von: " + tempsigner.getSubjectX500Principal().toString());
-//                        System.out.println("\tDatum: " + cal.getTime().toString());
-//                        System.out.println("\tAusgestellt von: " + tempsigner.getIssuerX500Principal().toString());
-//                        System.out.println("\tSeriennummer: " + tempsigner.getSerialNumber());
-//                        if (!tmpEgovOID.equals("")) {
-//                            System.out.println("\tVerwaltungseigenschaft: " + tmpEgovOID);
-//                        }
-//                        System.out.println("\n");
-//                        System.out.println("\tDocument modified: " + !pk.verify());
-////                Object fails[] = PdfPKCS7.verifyCertificates(pkc, kall, null, cal);
-////                if (fails == null) {
-////                    System.out.println("\tCertificates verified against the KeyStore");
-////                } else {
-////                    System.out.println("\tCertificate failed: " + fails[1]);
-////                }
-//                    }
-//
-//                //////
                 } else {
                     signatureBlock = new Rectangle(0, 0, 0, 0); // fake definition
                 }
                 PdfSignatureAppearance sap = stp.getSignatureAppearance();
 //                sap.setCrypto(GetPKCS12.privateKey, GetPKCS12.certificateChain, null,
 //                        PdfSignatureAppearance.WINCER_SIGNED );
-                sap.setCrypto(GetPKCS12.privateKey, GetPKCS12.certificateChain, null, null);
-                sap.setReason(signReason);
-                sap.setLocation(signLocation);
+                PdfSignature dic = new PdfSignature(PdfName.ADOBE_PPKMS, PdfName.ETSI_CADES_DETACHED);
+                //sap.setCrypto(GetPKCS12.privateKey, GetPKCS12.certificateChain, null, null);
+                dic.setName("YES YES");
+                dic.setReason(signReason);
+                dic.setLocation(signLocation);
+                sap.setCryptoDictionary(dic);
 //                if (signText) {
 //                    sap.setVisibleSignature(signatureBlock,
 //                            pages + 1, "PortableSigner");
@@ -369,41 +452,29 @@ public class PDFSigner {
                 } else {
                     sap.setCertificationLevel(PdfSignatureAppearance.NOT_CERTIFIED);
                 }
-                stp.close();
-                
-                /* MODIFY BY: Denis Torresan
-                Main.setResult(
-		                java.util.ResourceBundle.getBundle("net/pflaeging/PortableSigner/i18n").getString("IsGeneratedAndSigned"),
-		                false,
-		                "");
-								*/
-                
+                HashMap<PdfName, Integer> exc = new HashMap<PdfName, Integer>();
+                //  exc.put(PdfName.CONTENTS, new Integer(sap. * 2 + 2));
+                sap.preClose(exc);
+                // stp.close();
+                sap.close(dic);
+
+              
             } catch (Exception e) {
-            	
-            	/* MODIFY BY: Denis Torresan
-                Main.setResult(
+
+               
+                throw new PDFSignerException(
                         java.util.ResourceBundle.getBundle("net/pflaeging/PortableSigner/i18n").getString("ErrorWhileSigningFile"),
                         true,
                         e.getLocalizedMessage());
-							*/
 
-            	throw new PDFSignerException(
-            			java.util.ResourceBundle.getBundle("net/pflaeging/PortableSigner/i18n").getString("ErrorWhileSigningFile"),
-                        true,
-                        e.getLocalizedMessage() );
-            	
             }
         } catch (KeyStoreException kse) {
-        	
-        	/* MODIFY BY: Denis Torresan
-            Main.setResult(java.util.ResourceBundle.getBundle("net/pflaeging/PortableSigner/i18n").getString("ErrorCreatingKeystore"),
+
+           
+            throw new PDFSignerException(
+                    java.util.ResourceBundle.getBundle("net/pflaeging/PortableSigner/i18n").getString("ErrorCreatingKeystore"),
                     true, kse.getLocalizedMessage());
-            */
-        	
-        	throw new PDFSignerException(
-        			java.util.ResourceBundle.getBundle("net/pflaeging/PortableSigner/i18n").getString("ErrorCreatingKeystore"),
-                    true, kse.getLocalizedMessage() );
-        	
+
         }
     }
 }
